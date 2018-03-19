@@ -1,0 +1,40 @@
+#!/bin/sh
+#youtube-dl-gui-audio3
+#Author: Wan Nor Arifin
+#This script utilizes zenity and youtube-dl to do its work.
+#This version downloads audio only.
+
+LINK=`zenity --entry --title="Youtube link" --text="Paste link here:"`
+
+case $? in
+         0)
+                FILE_NAME=`youtube-dl -s --no-warnings --get-title $LINK`
+                echo "\"$FILE_NAME\" is being processed."
+		        youtube-dl -F $LINK 2>&1 | grep audio | zenity --text-info --title="Available audio formats for \"$FILE_NAME\"" --font="Courier Bold" \
+       		    --width=1000 --height=600
+		;;
+         1)
+                zenity --error --text="No link provided."
+		;;
+        -1)
+                zenity --error --text="An unexpected error has occurred."
+		;;
+esac
+
+FORMAT=`zenity --entry --title="Download" --text="Type format ID here:"`
+
+case $? in
+         0)
+		        DIRECTORY=`zenity --file-selection --filename=$HOME/Downloads --directory --title="Select download location"`
+                echo "Downloaded to $DIRECTORY"
+                cd "$DIRECTORY"
+                echo "\"$FILE_NAME\" is being processed."
+                youtube-dl --newline --no-warnings -x --audio-format mp3 -f $FORMAT $LINK 2>&1 | sed -u 's/.\+ \([0-9].\+%\) .\+ \([0-9].\+MiB\) .\+ETA \(.\+\)/\1\n# \1  of \2, estimated time to finish \3/' | zenity --progress --title="Downloading \"$FILE_NAME\"" --width=450 --height=150
+		;;
+         1)
+                zenity --error --text="No format ID provided."
+		;;
+        -1)
+                zenity --error --text="An unexpected error has occurred."
+		;;
+esac
